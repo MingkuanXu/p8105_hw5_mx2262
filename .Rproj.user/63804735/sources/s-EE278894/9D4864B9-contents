@@ -1,9 +1,101 @@
 ---
 title: "P8105 - Homework 5"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r library,message=FALSE,warning=FALSE}
+library(tidyverse)
+library(purrr)
+```
+
+### Problem 2
+
+#### Part 1 - Import Data
+```{r p2_import,message=FALSE}
+file_names = list.files(path = "./data/p2")
+
+read_single_file = function(x){
+  line = read_csv(paste("./data/p2/",x,sep="")) %>%
+    mutate(name = x) %>%
+    relocate(name)
+  return(line)
+}
+
+info = map_dfr(file_names,read_single_file)
+
+head(info)
+```
+
+#### Part 2 - Tidy results
+```{r p2_tidy}
+
+info = info %>%
+  mutate(arm = ifelse(substring(name,1,3)=="con","control","experimental")) %>%
+  mutate(id = as.numeric(substring(name,5,6))) %>%
+  select(id,arm,everything(),-name) %>%
+  pivot_longer(week_1:week_8,names_to = "week",names_prefix = "week_") %>%
+  janitor::clean_names()
+
+head(info)
+```
+
+#### Part 3 - Plot Data 
+```{r p2_plot}
+ggplot(info,aes(x=week,y=value,color=arm)) + 
+  geom_path(aes(group=id)) +
+  geom_point() +
+  labs(
+    title = "The Spaghetti Plot of Control Arm Data",
+    color = "Arm type") +
+  ylab("Value")+
+  xlab("Week")+
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+#### Part 4 - Observations
+
+From the spaghetti plot above, we observe the starting values for both the control and experimental arms are at a same level. However, as time goes by, the values for the experimental arms increase while the values for the control arms remain basically unchanged. 
+
+### Problem 3
+
+```{r p3_import}
+
+set.seed(10)
+
+iris_with_missing = iris %>% 
+  map_df(~replace(.x, sample(1:150, 20), NA)) %>%
+  mutate(Species = as.character(Species))
+
+```
+
+```{r p3_fill}
+fill_in_missings = function(x){
+  if(is.numeric(x)){
+    
+    x = ifelse(is.na(x), mean(x, na.rm = TRUE), x)
+    
+  } else if(is.character(x)){
+    
+    x = ifelse(is.na(x), "virginica", x)
+    
+  } else{
+    stop("Input vector should be either numeric or character.")
+  }
+  
+  return(x)
+}
+
+iris_filled_in = map_dfr(iris_with_missing, fill_in_missings)
+
+head(iris_filled_in)
+```
+
+```{r p3_na_values}
+sum(is.na(iris_with_missing)) # Calculate number of NAs in the original table
+sum(is.na(iris_filled_in)) # Calculate number of NAs in the filled table
+```
