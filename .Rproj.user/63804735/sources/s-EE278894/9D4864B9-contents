@@ -16,7 +16,7 @@ library(purrr)
 #### Part 1 - Load & describe the raw data
 ```{r p1_import}
 homicide_data = read_csv("data/homicide-data.csv") %>%
-    janotor::clean_names()
+    janitor::clean_names()
 ```
 The original raw data contains `r nrow(homicide_data)` rows and `r ncol(homicide_data)` columns, which records the `r names(homicide_data)` of each incident.
 
