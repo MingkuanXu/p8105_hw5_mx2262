@@ -11,6 +11,39 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(purrr)
 ```
+### Problem 1
+
+#### Part 1 - Load & describe the raw data
+```{r p1_import}
+homicide_data = read_csv("data/homicide-data.csv") %>%
+    janotor::clean_names()
+```
+The original raw data contains `r nrow(homicide_data)` rows and `r ncol(homicide_data)` columns, which records the `r names(homicide_data)` of each incident.
+
+#### Part 2 - Summarize within cities
+
+```{r p1_summarize}
+homicide_data_within_cities_total = 
+  homicide_data %>%
+  mutate(city_state = paste(city, state, sep = ",")) %>%
+  count(city_state)
+  
+homicide_data_within_cities_unsolved = 
+  homicide_data %>%
+  filter(disposition %in% c("Closed without arrest","Open/no arrest")) %>%
+  mutate(city_state = paste(city, state, sep = ",")) %>%
+  count(city_state)  
+
+homicide_data_within_cities_summary = left_join(
+  homicide_data_within_cities_total, 
+  homicide_data_within_cities_unsolved, 
+  by = "city_state") %>%
+  select(City=city_state,Total=n.x,Unsolved=n.y) %>%
+  mutate(Unsolved = replace_na(Unsolved,0))
+
+knitr::kable(head(homicide_data_within_cities_summary))
+```
+
 
 ### Problem 2
 
